@@ -47,7 +47,13 @@ if command -v limine-update >/dev/null; then
 fi
 
 # 5. Enable touch/pen support.
-sudo systemctl enable --now iptsd
+# The unit name varies by package build, so don't abort the whole install if it's missing.
+iptsd_unit=$(pacman -Ql iptsd 2>/dev/null | awk '{print $2}' | grep -E '/iptsd[^/]*\.service$' | head -1 | xargs -r basename)
+if [[ -n $iptsd_unit ]]; then
+    sudo systemctl enable --now "$iptsd_unit" || echo "Could not enable $iptsd_unit; check: systemctl status $iptsd_unit" >&2
+else
+    echo "No iptsd service unit found. Check: pacman -Ql iptsd | grep service" >&2
+fi
 
 echo
 echo "Done. Reboot and pick the linux-surface entry in the boot menu."
